@@ -4,7 +4,7 @@
 
 This module is a plugin for the Seneca framework. It based on [seneca-user](https://github.com/rjrodger/seneca-user) from [Richard Rodger](https://github.com/rjrodger) adding the support of PBKDF2 algorithm for password hashing.
 
-I basically overwrite the following two seneca-user command, in order to use PbkDf2 algorithm for password hashing:
+It basically overwrite the following two seneca-user command, in order to change the algorithm for password hashing:
 
    * encrypt_password
    * verify_password
