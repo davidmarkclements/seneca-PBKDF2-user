@@ -1,7 +1,7 @@
 {
   "name": "seneca-PBKDF2-user",
-  "description": "User management plugin for the seneca module.",
-  "version": "0.2.10",
+  "description": "User management plugin for the seneca module that support PBKDF2 encryption for password.",
+  "version": "0.0.1",
   "keywords": [
     "seneca",
     "user",
