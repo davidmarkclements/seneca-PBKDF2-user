@@ -1,8 +1,8 @@
 # seneca-PBKDF2-user
-
+https://travis-ci.org/piccoloaiutante/seneca-PBKDF2-user.svg
 ## A user management plugin for the [Seneca](http://senecajs.org) toolkit 
 
-This module is a plugin for the Seneca framework. It provides business logic for user management, such as:
+This module is a plugin for the Seneca framework. it based on [seneca-user](https://github.com/rjrodger/seneca-user) from [Richard Rodger](https://github.com/rjrodger). It provides business logic for user management, such as: I
 
    * login
    * logout
