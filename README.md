@@ -2,7 +2,9 @@
 https://travis-ci.org/piccoloaiutante/seneca-PBKDF2-user.svg
 ## A user management plugin for the [Seneca](http://senecajs.org) toolkit 
 
-This module is a plugin for the Seneca framework. it based on [seneca-user](https://github.com/rjrodger/seneca-user) from [Richard Rodger](https://github.com/rjrodger). It provides business logic for user management, such as: I
+This module is a plugin for the Seneca framework. It based on [seneca-user](https://github.com/rjrodger/seneca-user) from [Richard Rodger](https://github.com/rjrodger) adding the support of PBKDF2 algorithm for password hashing.
+
+It provides business logic for user management, such as: I
 
    * login
    * logout
