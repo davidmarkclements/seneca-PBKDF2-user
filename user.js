@@ -118,14 +118,16 @@ module.exports = function user(options) {
 
     crypto.pbkdf2(args.password || '', salt,  options.rounds,128, function (err,pass) {
       if(err) done(err,null);
-      done(null, {ok: true, pass: pass, salt: salt});
+      done(null, {ok: true, pass: ab2str(pass), salt: salt});
     });
 
 
   }
   cmd_encrypt_password.descdata = function(args){return hide(args,{password:1,repeat:1})}
 
-
+  function ab2str(buf) {
+    return String.fromCharCode.apply(null, new Uint16Array(buf));
+  }
 
   // Verify proposed password is correct, redoing SHA512 rounds
   // - proposed: trial password string
@@ -134,20 +136,10 @@ module.exports = function user(options) {
   // Provides: {ok:}
   function cmd_verify_password( args, done ){
 
-    crypto.pbkdf2Sync(args.password, salt,  options.rounds,256, function (err,pass) {
+    crypto.pbkdf2(args.proposed|| '', args.salt,  options.rounds,128, function (err,pass) {
       if(err) done(err,null);
-      var ok = (pass === args.pass)
-
-      // for backwards compatibility with <= 0.2.3
-      if (!ok && options.oldsha) {
-        var shasum = crypto.createHash('sha1')
-        shasum.update(args.proposed + args.salt)
-        pass = shasum.digest('hex')
-
-        ok = (pass === args.pass)
-        return done(null, {ok: ok});
-      }
-      else return done(null, {ok: ok});
+      var ok = (ab2str(pass) === args.pass);
+      return done(null, {ok: ok});
     });
 
   }
