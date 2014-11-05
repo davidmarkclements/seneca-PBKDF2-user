@@ -23,7 +23,7 @@ describe('user', function () {
       assert.isNull(err);
       assert.ok(data.ok);
       assert.isNotNull(data.salt);
-      assert.equal(data.pass.length,128);
+      assert.equal(data.pass.length,172);
 
       done()
     });

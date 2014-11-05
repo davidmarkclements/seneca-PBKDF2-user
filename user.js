@@ -126,7 +126,7 @@ module.exports = function user(options) {
   cmd_encrypt_password.descdata = function(args){return hide(args,{password:1,repeat:1})}
 
   function ab2str(buf) {
-    return String.fromCharCode.apply(null, new Uint16Array(buf));
+    return buf.toString('base64');
   }
 
   // Verify proposed password is correct, redoing SHA512 rounds
