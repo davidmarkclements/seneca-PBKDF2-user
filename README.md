@@ -2,7 +2,7 @@
 [![Build Status](https://travis-ci.org/piccoloaiutante/seneca-PBKDF2-user.png?branch=master)](https://travis-ci.org/piccoloaiutante/seneca-PBKDF2-user)
 ## A [Seneca](http://senecajs.org) plugin for supporting PbkDf2 password encryption. 
 
-This module is a plugin for the Seneca framework. It based on [seneca-user](https://github.com/rjrodger/seneca-user) from [Richard Rodger](https://github.com/rjrodger) adding the support of PBKDF2 algorithm for password hashing.
+This module is a plugin for the Seneca framework. It based on [seneca-user](https://github.com/rjrodger/seneca-user) from [Richard Rodger](https://github.com/rjrodger) adding the support of PBKDF2 algorithm for password hashing. This plugin is sponsored by [nearForm](http://www.nearform.com).
 
 It basically overwrite the following two seneca-user command, in order to change the algorithm for password hashing:
 
