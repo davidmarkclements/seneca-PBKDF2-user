@@ -14,12 +14,14 @@ describe('user', function () {
 
   var salt;
   var pass;
+  var rounds;
   it('password-encryption', function (done) {
     this.timeout(60000)
     si.act('role:user,cmd:encrypt_password', {password: 'test',repeat: 'test'}, function(err,data){
 
       salt=data.salt;
       pass=data.pass;
+      rounds=data.rounds;
       assert.isNull(err);
       assert.ok(data.ok);
       assert.isNotNull(data.salt);
@@ -31,7 +33,7 @@ describe('user', function () {
 
   it('verify-password', function (done) {
     this.timeout(60000)
-    si.act('role:user,cmd:verify_password', {proposed: 'test',pass: pass,salt:salt}, function(err,data){
+    si.act('role:user,cmd:verify_password', {proposed: 'test',pass: pass,salt:salt,rounds:rounds}, function(err,data){
       assert.isNull(err);
       assert.ok(data.ok);
 
