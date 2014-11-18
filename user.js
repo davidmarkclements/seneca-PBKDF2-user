@@ -3,6 +3,7 @@
 
 var crypto = require('crypto')
 var _    = require('underscore')
+var uuid= require('node-uuid')
 
 
 
