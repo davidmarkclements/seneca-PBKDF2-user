@@ -87,7 +87,7 @@ module.exports = function user(options) {
     proposed: {required$:true,string$:true},
     pass:     {required$:true,string$:true},
     salt:     {required$:true,string$:true},
-    rounds:   {required$:true,string$:true}
+    // rounds:   {required$:true,string$:true}
   }, cmd_verify_password )
 
 
@@ -343,28 +343,6 @@ module.exports = function user(options) {
 
 
 
-
-
-
-
-  function hasher( src, rounds, done ) {
-    var out = src, i = 0
-
-    // don't chew up the CPU
-    function round() {
-      i++
-      var shasum = crypto.createHash('sha512')
-      shasum.update( out, 'utf8' )
-      out = shasum.digest('hex')
-      if( rounds <= i ) { return done(out);}
-      if( 0 == i % 88 ) { return process.nextTick(round);}
-      round()
-    }
-    round()
-  }
-
-
-
   // Encrypt password using a salt and multiple SHA512 rounds
   // Override for password strength checking
   // - password: password string
@@ -414,8 +392,9 @@ module.exports = function user(options) {
   // - salt:     password salt
   // Provides: {ok:}
   function cmd_verify_password( args, done ){
-    crypto.pbkdf2(args.proposed|| '', args.salt,  parseInt(args.rounds),options.keylenght, function (err,pass) {
+    crypto.pbkdf2(args.proposed|| '', args.salt,  parseInt(args.rounds), options.keylenght, function (err,pass) {
       if(err) done(err,null);
+
       var ok = (ab2str(pass) === args.pass);
       return done(null, {ok: ok});
     });
@@ -564,7 +543,7 @@ module.exports = function user(options) {
       return make_login( user, 'auto' );
     }
     else {
-      seneca.act({role:role,cmd:'verify_password',proposed:args.password,pass:user.pass,salt:user.salt}, function(err,out){
+      seneca.act({role:role,cmd:'verify_password',proposed:args.password,pass:user.pass,salt:user.salt,rounds:user.rounds}, function(err,out){
         if( err ) return done(err);
         if( !out.ok ) {
           seneca.log.debug('login/fail',why='invalid-password',user)
@@ -1000,7 +979,6 @@ module.exports = function user(options) {
     })
   }
 
-
   // DEPRECATED - do this in seneca-auth
   function cmd_clean(args,done){
     var user = args.user.data$()
@@ -1010,22 +988,6 @@ module.exports = function user(options) {
     delete user.$
     done(null,user)
   }
-
-
-
-  seneca.add({init:role},function(args,done){
-    var seneca  = this
-    var userent = seneca.make('sys/user')
-    var loginent = seneca.make('sys/login')
-    var resetent = seneca.make('sys/reset')
-
-    this.act('role:util, cmd:define_sys_entity', {list:[
-      { entity:userent.entity$, fields:options.user.fields},
-      { entity:loginent.entity$,fields:options.login.fields},
-      { entity:resetent.entity$,fields:options.reset.fields}
-    ]},done)
-  })
-
 
   return {
     name:role
