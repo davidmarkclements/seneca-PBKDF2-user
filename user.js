@@ -3,9 +3,9 @@
 
 
 var crypto = require('crypto')
-
-var _    = require('underscore')
 var uuid = require('node-uuid')
+var _    = require('underscore')
+_.mixin({ 'deepExtend': deepExtend });
 
 
 // WARNING: this plugin is for *internal* use, DO NOT expose via an API.
@@ -425,11 +425,22 @@ module.exports = function user(options) {
         user.pass = out.pass
         user.rounds = options.rounds
 
-        user.save$(function(err,user){
-          if( err ) return done(err);
+        function save(user) {
+          user.save$(function(err,user){
+            if( err ) return done(err);
+            
+            done(null,{ok:true,user:user})
+          })
+        }
 
-          done(null,{ok:true,user:user})
-        })
+        if (user.save$) { return save(user); }
+
+        seneca.make$('sys','user')
+          .load$(user.id, function (err, user_ent) {
+            _.deepExtend(user_ent, user);
+            save(user_ent);
+          });            
+
       })
   }
   cmd_change_password.descdata = function(args){return hide(args,{password:1,repeat:1})}
@@ -979,6 +990,7 @@ module.exports = function user(options) {
     })
   }
 
+
   // DEPRECATED - do this in seneca-auth
   function cmd_clean(args,done){
     var user = args.user.data$()
@@ -989,7 +1001,44 @@ module.exports = function user(options) {
     done(null,user)
   }
 
+
   return {
     name:role
   }
 }
+
+
+function deepExtend(obj) {
+    var parentRE = /#{\s*?_\s*?}/,
+    slice = Array.prototype.slice;
+   
+    _.each(slice.call(arguments, 1), function(source) {
+      for (var prop in source) {
+        if (_.isUndefined(obj[prop]) || _.isFunction(obj[prop]) || _.isNull(source[prop]) || _.isDate(source[prop])) {
+          obj[prop] = source[prop];
+        }
+        else if (_.isString(source[prop]) && parentRE.test(source[prop])) {
+          if (_.isString(obj[prop])) {
+            obj[prop] = source[prop].replace(parentRE, obj[prop]);
+          }
+        }
+        else if (_.isArray(obj[prop]) || _.isArray(source[prop])){
+          if (!_.isArray(obj[prop]) || !_.isArray(source[prop])){
+            throw new Error('Trying to combine an array with a non-array (' + prop + ')');
+          } else {
+            obj[prop] = _.reject(_.deepExtend(_.clone(obj[prop]), source[prop]), function (item) { return _.isNull(item);});
+          }
+        }
+        else if (_.isObject(obj[prop]) || _.isObject(source[prop])){
+          if (!_.isObject(obj[prop]) || !_.isObject(source[prop])){
+            throw new Error('Trying to combine an object with a non-object (' + prop + ')');
+          } else {
+            obj[prop] = _.deepExtend(_.clone(obj[prop]), source[prop]);
+          }
+        } else {
+          obj[prop] = source[prop];
+        }
+      }
+    });
+    return obj;
+  }
