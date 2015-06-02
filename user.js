@@ -318,16 +318,7 @@ module.exports = function user(options) {
       return done('nick_or_email_missing');
     }
 
-    userent.load$(q, function( err, user ) {
-      if(err) {
-        return done(err);
-      } else if(!user) {
-        return done('user-not-found');
-      } else {
-        return done(err, user);
-      }
-
-    });
+    userent.load$(q, done);
   });
 
 
@@ -345,7 +336,7 @@ module.exports = function user(options) {
         return cmd.call( seneca, args, done )
       }
 
-      seneca.act({ role: role, cmd: 'resolve_user' }, function(err, user) {
+      seneca.act({ role: role, cmd: 'resolve_user' }, args, function(err, user) {
         if( err ) {
           return (err === 'nick_or_email_missing')
             ? done(null, { ok: false, why: err }) //pass the error through
