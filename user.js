@@ -268,7 +268,67 @@ module.exports = function user(options) {
     var kind = args.kind || 'user'
     var ent = ( 'user' == kind ? userent : loginent ).make$()
     done(null, ent )
-  })
+  });
+
+
+  /**
+   *   TODO document
+   *
+   */
+  seneca.add({ role: role, cmd: 'resolve_user' }, function(args, done) {
+    var seneca = this;
+    var userent  = seneca.make('sys/user');
+    var q = args.q || {};
+    var valid = false;
+
+    if( args.email && args.nick ) {
+
+      // email wins
+      if( args.email !== args.nick ) {
+        q.email = args.email
+        valid = true
+      }
+      else if( ~args.email.indexOf('@') ) {
+        q.email = args.email
+        valid = true
+      }
+      else {
+        q.nick = args.nick
+        valid = true
+      }
+    }
+    else if( args.email ) {
+      q.email = args.email
+      valid = true
+    }
+    else if( args.nick ) {
+      q.nick = args.nick
+      valid = true
+    }
+    else if( args.username ) {
+      q.nick = args.username
+      valid = true
+    }
+    else if( args.user && !args.user.entity$) {
+      q.id = args.user
+      valid = true
+    }
+
+    if( !valid ) {
+      return done('nick_or_email_missing');
+    }
+
+    userent.load$(q, function( err, user ) {
+      if(err) {
+        return done(err);
+      } else if(!user) {
+        return done('user-not-found');
+      } else {
+        return done(err, user);
+      }
+
+    });
+  });
 
 
 
@@ -284,60 +344,23 @@ module.exports = function user(options) {
       if( args.user && args.user.entity$ ) {
         return cmd.call( seneca, args, done )
       }
-      else {
-        var q = {}, valid = false
 
-
-        if( args.email && args.nick ) {
-
-          // email wins
-          if( args.email !== args.nick ) {
-            q.email = args.email
-            valid = true
-          }
-          else if( ~args.email.indexOf('@') ) {
-            q.email = args.email
-            valid = true
-          }
-          else {
-            q.nick = args.nick
-            valid = true
-          }
-        }
-        else if( args.email ) {
-          q.email = args.email
-          valid = true
-        }
-        else if( args.nick ) {
-          q.nick = args.nick
-          valid = true
-        }
-        else if( args.username ) {
-          q.nick = args.username
-          valid = true
-        }
-        else if( args.user && !args.user.entity$) {
-          q.id = args.user
-          valid = true
+      seneca.act({ role: role, cmd: 'resolve_user' }, function(err, user) {
+        if( err ) {
+          return (err === 'nick_or_email_missing')
+            ? done(null, { ok: false, why: err }) //pass the error through
+            : done(err);
+        } else if(!user) {
+          //special error handling if there is no user..
+          return fail
+            ? seneca.fail({code:'user/not-found',q:q})
+            : done(null,{ok:false,why:'user-not-found',nick:q.nick,email:q.email});
         }
 
-        if( !valid ) {
-          return done(null,{ok:false,why:'nick_or_email_missing'})
-        }
-
-        userent.load$(q, function( err, user ){
-          if( err ) return done(err);
-          if( !user ) {
-            if( fail ) {
-              return seneca.fail({code:'user/not-found',q:q});
-            }
-            else return done(null,{ok:false,why:'user-not-found',nick:q.nick,email:q.email})
-          }
-          args.user = user
-
-          return cmd.call( seneca, args, done )
-        })
-      }
+        //all is good.
+        args.user = user;
+        return cmd.call( seneca, args, done )
+      });
     }
   }
 
