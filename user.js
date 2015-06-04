@@ -297,8 +297,7 @@ module.exports = function user(options) {
 
 
   /**
-   *   TODO document
-   *
+   * The action to find the user, this can be overriding or customised to pass new parameters
    */
   seneca.add({ role: role, cmd: 'resolve_user' }, function(args, done) {
     assert(args.q);
