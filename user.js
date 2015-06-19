@@ -1,7 +1,7 @@
 /* Copyright (c) 2012-2014 Richard Rodger, MIT License */
 "use strict";
 
-
+var assert = require('assert');
 var crypto = require('crypto')
 var uuid = require('node-uuid')
 var _    = require('underscore')
@@ -22,6 +22,31 @@ function conditionalExtend(user, args) {
     }
   })
 }
+
+
+function buildUserQuery(args, done) {
+  if(args.email && ~args.email.indexOf('@')) {
+    return done(null, { email: args.email });
+  }
+
+  if(args.nick) {
+    return done(null, { nick: args.nick });
+  }
+
+  if(args.username) {
+    return done(null, { nick: args.username });
+  }
+
+  if(args.user && !args.user.entity$) {
+    return done(null, { id: args.user });
+  }
+
+  //not valid
+  return done('nick_or_email_missing');
+}
+
+
+
 module.exports = function user(options) {
   var seneca = this
 
@@ -268,7 +293,17 @@ module.exports = function user(options) {
     var kind = args.kind || 'user'
     var ent = ( 'user' == kind ? userent : loginent ).make$()
     done(null, ent )
-  })
+  });
+
+
+  /**
+   * The action to find the user, this can be overriding or customised to pass new parameters
+   */
+  seneca.add({ role: role, cmd: 'resolve_user' }, function(args, done) {
+    assert(args.q);
+    var userent  = this.make('sys/user');
+    userent.load$(args.q, done);
+  });
 
 
 
@@ -284,60 +319,31 @@ module.exports = function user(options) {
       if( args.user && args.user.entity$ ) {
         return cmd.call( seneca, args, done )
       }
-      else {
-        var q = {}, valid = false
 
+      buildUserQuery(args, function(err, query) {
+        if(err) {
+          //nick or email missing
+          return done(null, { ok: false, why: err });
+        }
 
-        if( args.email && args.nick ) {
+        //append the new user query
+        args.q = query;
 
-          // email wins
-          if( args.email !== args.nick ) {
-            q.email = args.email
-            valid = true
+        seneca.act({ role: role, cmd: 'resolve_user' }, args, function(err, user) {
+          if( err ) {
+            return done(err);
+          } else if(!user) {
+            //special error handling if there is no user..
+            return fail
+              ? seneca.fail({code:'user/not-found', q: query})
+              : done(null, { ok: false, why:'user-not-found', nick: query.nick, email: query.email });
           }
-          else if( ~args.email.indexOf('@') ) {
-            q.email = args.email
-            valid = true
-          }
-          else {
-            q.nick = args.nick
-            valid = true
-          }
-        }
-        else if( args.email ) {
-          q.email = args.email
-          valid = true
-        }
-        else if( args.nick ) {
-          q.nick = args.nick
-          valid = true
-        }
-        else if( args.username ) {
-          q.nick = args.username
-          valid = true
-        }
-        else if( args.user && !args.user.entity$) {
-          q.id = args.user
-          valid = true
-        }
 
-        if( !valid ) {
-          return done(null,{ok:false,why:'nick_or_email_missing'})
-        }
-
-        userent.load$(q, function( err, user ){
-          if( err ) return done(err);
-          if( !user ) {
-            if( fail ) {
-              return seneca.fail({code:'user/not-found',q:q});
-            }
-            else return done(null,{ok:false,why:'user-not-found',nick:q.nick,email:q.email})
-          }
-          args.user = user
-
+          //all is good.
+          args.user = user;
           return cmd.call( seneca, args, done )
-        })
-      }
+        });
+      });
     }
   }
 
